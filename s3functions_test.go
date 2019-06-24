@@ -8,6 +8,7 @@ import (
 	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"os"
 	"strings"
 	"testing"
@@ -127,6 +128,9 @@ func TestSharedImageHandler(t *testing.T) {
 		t.Error(e.Error())
 	}
 	s3file := strings.Split(string(resultBody), "/")
+	if rows, e := db.Query("select bucket from files_stored where name = $1;", string(resultBody)); e != nil || !rows.Next() {
+		t.Error("Fail: ", e.Error())
+	}
 	if s3file[2] != s3Host || s3file[3] != s3Bucket {
 		t.Errorf("%s", string(resultBody))
 	}
@@ -152,8 +156,8 @@ func TestSharedBatchImageHandler(t *testing.T) {
 	wr := httptest.NewRecorder()
 	m := make(map[string]string)
 	m["bucket"] = "magick-crop"
-	m["width"] = "450"
-	m["height"] = "350"
+	m["width"] = "50"
+	m["height"] = "50"
 	bfl, contentType, e := generateMultipartRequest("image0", m)
 	if e != nil {
 		t.Errorf("%s", e.Error())
@@ -171,7 +175,36 @@ func TestSharedBatchImageHandler(t *testing.T) {
 	}
 	var img [10]string
 	e = json.Unmarshal(b, &img)
-	if !strings.Contains(img[0], "minio") {
+	if img[0] == "" {
 		t.Errorf("Fail: %s, %s", img[0], e.Error())
+	}
+}
+func TestDeleteFileHandler(t *testing.T) {
+	wr := httptest.NewRecorder()
+	r := new(http.Request)
+	body := make(url.Values)
+	body.Set("app", "test")
+	body.Set("bucket", "magick-crop")
+	response, e := http.Get("https://via.placeholder.com/1500")
+	if e != nil {
+		t.Error(e.Error())
+	}
+	b, e := ioutil.ReadAll(response.Body)
+	if e != nil {
+		t.Error(e.Error())
+	}
+	loc, e := tmpSaveFile(b)
+	if e != nil {
+		t.Error(e.Error())
+	}
+	body.Set("name", loc)
+	r.PostForm = body
+	name := strings.Split(loc, "/")
+	s3 := s3Init()
+	putFile(s3, loc, "magick-crop", name[len(name)-1], "image/png")
+	store(loc, r.RemoteAddr, "test", "magick-crop")
+	http.HandlerFunc(deleteFileHandler).ServeHTTP(wr, r)
+	if wr.Result().Status != "200 OK" {
+		t.Error("Fail: ", wr.Result().Status)
 	}
 }

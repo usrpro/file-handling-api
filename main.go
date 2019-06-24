@@ -10,11 +10,14 @@ import (
 )
 
 func imageHandler(wr http.ResponseWriter, r *http.Request) {
+	wr.Header().Set("Access-Control-Allow-Origin", acao)
 	switch r.RequestURI {
 	case "/single-image":
 		sharedImageHandler(wr, r)
 	case "/batch-images":
 		sharedBatchImageHandler(wr, r)
+	case "/delete-file":
+		deleteFileHandler(wr, r)
 	}
 }
 

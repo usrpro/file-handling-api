@@ -1,0 +1,1 @@
+delete from files_stored where application = $1 and name = $2;

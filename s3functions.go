@@ -34,6 +34,7 @@ const (
 	batchMultipartParseMax      = 15000000
 	batchMultipartSingleFileMax = 2500000
 	singleMultipartParseMax     = 9000000
+	acao                        = "*"
 )
 
 func generateURL(c *minio.Client, bucket string, object string) {
@@ -85,9 +86,9 @@ func makeBucket(Client *minio.Client, bucket string) {
 }
 
 func getPolicy(Client *minio.Client, bucket string) {
-	policy, pErr := Client.GetBucketPolicy(bucket)
-	if pErr != nil {
-		log.Println(pErr)
+	policy, e := Client.GetBucketPolicy(bucket)
+	if e != nil {
+		log.Println(e.Error())
 	}
 	policyReader := strings.NewReader(policy)
 	fl, _ := os.Create("policy.json")
@@ -113,27 +114,36 @@ func putFile(c *minio.Client, filePath string, bucket string, keyName string, co
 	return os.Remove(filePath)
 }
 
+func deleteFile(c *minio.Client, bucket, name string) error {
+	if e := c.RemoveObject(bucket, name); e != nil {
+		log.Println(e.Error())
+		return e
+	}
+	return nil
+}
+
 func getFile(c *minio.Client, bucket string, keyName string, newLocalFile string) {
-	reader, err := c.GetObject(bucket, keyName, minio.GetObjectOptions{})
-	if err != nil {
-		log.Println(err)
+	reader, e := c.GetObject(bucket, keyName, minio.GetObjectOptions{})
+	if e != nil {
+		log.Println(e.Error())
 	}
 	defer reader.Close()
 	newLocFile, _ := os.Create(newLocalFile)
 	defer newLocFile.Close()
-	info, iErr := reader.Stat()
-	if iErr != nil {
-		log.Println(iErr)
+	info, e := reader.Stat()
+	if e != nil {
+		log.Println(e.Error())
 	}
-	_, CopyNerr := io.CopyN(newLocFile, reader, info.Size)
-	if CopyNerr != nil {
-		log.Println(CopyNerr)
+	_, e = io.CopyN(newLocFile, reader, info.Size)
+	if e != nil {
+		log.Println(e.Error())
 	}
 }
 
 // This should be used as multipurpose single image processing endpoint.
 // Parses up to 9 MB, single image files.
 // Check forwards: jpeg/jpg/png/gif
+// Keys: `image`, `width`, `height`, `bucket`, `app`
 func sharedImageHandler(wr http.ResponseWriter, r *http.Request) {
 	r.ParseMultipartForm(singleMultipartParseMax)
 	_, fh, e := r.FormFile("image")
@@ -185,7 +195,13 @@ func sharedImageHandler(wr http.ResponseWriter, r *http.Request) {
 				fmt.Fprint(wr, "Error while processing file.")
 			}
 			imageurl := strings.Join([]string{constructURL(), randNameWithExtension}, "")
-			log.Println(imageurl)
+			if e := store(imageurl, r.RemoteAddr, r.FormValue("app"), bucket); e != nil {
+				wr.WriteHeader(http.StatusInternalServerError)
+				fmt.Fprint(wr, "Internal server error.")
+				return
+			}
+			wr.WriteHeader(http.StatusOK)
+			wr.Header().Set("Content-Type", "text/plain")
 			wr.Write([]byte(imageurl))
 			return
 		}
@@ -204,6 +220,7 @@ func sharedImageHandler(wr http.ResponseWriter, r *http.Request) {
 // Up to 10 images can be processed, key example: `image0` up to `image9`.
 // Individual images should have less than `2.5 MB`.
 // Total multipart form should be less than `15 MB`.
+// Additional field keys excluding the files mentioned above: `bucket`, `app`
 func sharedBatchImageHandler(wr http.ResponseWriter, r *http.Request) {
 	r.ParseMultipartForm(batchMultipartParseMax)
 	for _, v := range r.Form {
@@ -261,6 +278,11 @@ func sharedBatchImageHandler(wr http.ResponseWriter, r *http.Request) {
 					}
 					imageurl := strings.Join([]string{constructURL(), randNameWithExtension}, "")
 					s3UploadedBatch = append(s3UploadedBatch, imageurl)
+					if e := store(imageurl, r.RemoteAddr, r.FormValue("app"), bucket); e != nil {
+						wr.WriteHeader(http.StatusInternalServerError)
+						fmt.Fprint(wr, "Internal server error.")
+						return
+					}
 					b, e := json.Marshal(&s3UploadedBatch)
 					if e != nil {
 						wr.WriteHeader(http.StatusInternalServerError)
@@ -276,4 +298,33 @@ func sharedBatchImageHandler(wr http.ResponseWriter, r *http.Request) {
 		}
 
 	}
+}
+
+// POST keys: "app", "name"(the url is needed), "bucket"
+func deleteFileHandler(wr http.ResponseWriter, r *http.Request) {
+	r.ParseForm()
+	for _, v := range r.PostForm {
+		if v[0] == "" {
+			wr.WriteHeader(http.StatusBadRequest)
+			fmt.Fprint(wr, "Invalid form fields.")
+			return
+		}
+	}
+	b, e := ioutil.ReadFile("sql/queries/delete.sql")
+	if e != nil {
+		wr.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprint(wr, "[1]Error while processing your request.")
+		return
+	}
+	if ct, e := db.Exec(string(b), r.FormValue("app"), r.FormValue("name")); e != nil || ct.RowsAffected() != 1 {
+		wr.WriteHeader(http.StatusInternalServerError)
+		log.Println(e.Error(), ct.RowsAffected())
+		fmt.Fprint(wr, "[2]Error while processing your request.")
+		return
+	}
+	name := strings.Split(r.FormValue("name"), "/")
+	if e = deleteFile(s3Client, r.FormValue("bucket"), name[len(name)-1]); e != nil {
+		fmt.Fprint(wr, "[3]Error while processing your request.")
+	}
+	fmt.Fprint(wr, "Deleted.")
 }
