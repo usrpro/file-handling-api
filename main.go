@@ -22,9 +22,13 @@ func imageHandler(wr http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+	//goconfig.Read(&config)
+	//log15.Debug("Parsed configuration", "config", config)
+	s3Client = s3Init()
+
 	iSig := make(chan os.Signal, 1)
 	signal.Notify(iSig, os.Interrupt)
-	s := http.Server{Addr: "0.0.0.0:9090", Handler: http.HandlerFunc(imageHandler)}
+	s := http.Server{Addr: config.Server.Listen, Handler: http.HandlerFunc(imageHandler)}
 	go func() {
 		s.ListenAndServe()
 	}()

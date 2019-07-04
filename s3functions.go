@@ -17,16 +17,11 @@ import (
 	minio "github.com/minio/minio-go"
 )
 
-var s3Protocol = "https:"
-var s3Host = ""
-var s3key = ""
-var s3sk = ""
-var s3Bucket = ""
-var s3Client = s3Init()
+var s3Client *minio.Client // = s3Init()
 
 // For public buckets
 func constructURL() string {
-	publicURL := strings.Join([]string{s3Protocol, "//", s3Host, "/", s3Bucket, "/"}, "")
+	publicURL := strings.Join([]string{config.S3Conf.S3Protocol, "//", config.S3Conf.S3Host, "/", config.S3Conf.S3Bucket, "/"}, "")
 	return publicURL
 }
 
@@ -56,16 +51,16 @@ func setPolicy(Client *minio.Client, bucket string) {
 }
 
 func s3Init() *minio.Client {
-	endpoint := s3Host
-	apiKey := s3key
-	secretKey := s3sk
+	endpoint := config.S3Conf.S3Host
+	apiKey := config.S3Conf.S3key
+	secretKey := config.S3Conf.S3sk
 	useSSL := true
 	Client, e := minio.New(endpoint, apiKey, secretKey, useSSL)
 	if e != nil {
 		log.Println(e.Error())
 	}
-	makeBucket(Client, s3Bucket)
-	setPolicy(Client, s3Bucket)
+	makeBucket(Client, config.S3Conf.S3Bucket)
+	setPolicy(Client, config.S3Conf.S3Bucket)
 	return Client
 }
 

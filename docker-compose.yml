@@ -1,0 +1,9 @@
+version: '3.7'
+
+services:
+
+  fileapi:
+    image: hub.usrp.ro/file-handling-api
+    build: .
+    env_file:
+      -  ./file-handling.env
