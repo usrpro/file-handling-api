@@ -278,12 +278,7 @@ func sharedBatchImageHandler(wr http.ResponseWriter, r *http.Request) {
 						fmt.Fprint(wr, "Internal server error.")
 						return
 					}
-					b, e := json.Marshal(&s3UploadedBatch)
-					if e != nil {
-						wr.WriteHeader(http.StatusInternalServerError)
-						fmt.Fprint(wr, "Error while processing your request.")
-					}
-					wr.Write(b)
+
 				} else {
 					fmt.Fprint(wr, fh.Filename, " Only images are accepted.")
 				}
@@ -293,6 +288,13 @@ func sharedBatchImageHandler(wr http.ResponseWriter, r *http.Request) {
 		}
 
 	}
+	b, e := json.Marshal(&s3UploadedBatch)
+	if e != nil {
+		wr.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprint(wr, "Error while processing your request.")
+	}
+	wr.Write(b)
+	return
 }
 
 // POST keys: "app", "name"(the url is needed), "bucket"
