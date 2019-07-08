@@ -18,10 +18,10 @@ import (
 )
 
 var s3Protocol = "https:"
-var s3Host = "play.minio.io:9000"
-var s3key = "Q3AM3UQ867SPQQA43P2F"
-var s3sk = "zuf+tfteSlswRu7BJ86wekitnifILbZam1KYY3TG"
-var s3Bucket = "magick-crop"
+var s3Host = ""
+var s3key = ""
+var s3sk = ""
+var s3Bucket = ""
 var s3Client = s3Init()
 
 // For public buckets
