@@ -9,6 +9,10 @@ import (
 	"time"
 )
 
+func init() {
+	s3Client = s3Init()
+}
+
 func imageHandler(wr http.ResponseWriter, r *http.Request) {
 	wr.Header().Set("Access-Control-Allow-Origin", acao)
 	switch r.RequestURI {
@@ -24,8 +28,6 @@ func imageHandler(wr http.ResponseWriter, r *http.Request) {
 func main() {
 	//goconfig.Read(&config)
 	//log15.Debug("Parsed configuration", "config", config)
-	s3Client = s3Init()
-
 	iSig := make(chan os.Signal, 1)
 	signal.Notify(iSig, os.Interrupt)
 	s := http.Server{Addr: config.Server.Listen, Handler: http.HandlerFunc(imageHandler)}

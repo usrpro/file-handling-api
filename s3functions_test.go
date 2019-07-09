@@ -15,7 +15,7 @@ import (
 )
 
 func TestS3Init(t *testing.T) {
-	if o, e := s3Init().BucketExists(s3Bucket); e != nil || !o {
+	if o, e := s3Init().BucketExists(config.S3Conf.S3Bucket); e != nil || !o {
 		t.Errorf("S3Init test failed: %s", e.Error())
 	}
 }
@@ -41,7 +41,7 @@ func TestPutFile(t *testing.T) {
 	err = append(err, e)
 	saveFilePath := strings.Join([]string{folder, "/", fileName, ".png"}, "")
 	err = append(err, ioutil.WriteFile(saveFilePath, b, os.ModePerm))
-	err = append(err, putFile(s3, saveFilePath, s3Bucket, fileName, "image/png"))
+	err = append(err, putFile(s3, saveFilePath, config.S3Conf.S3Bucket, fileName, "image/png"))
 	for _, v := range err {
 		if v != nil {
 			t.Errorf("S3 PUT test failed: %s", v.Error())
@@ -131,7 +131,7 @@ func TestSharedImageHandler(t *testing.T) {
 	if rows, e := db.Query("select bucket from files_stored where name = $1;", string(resultBody)); e != nil || !rows.Next() {
 		t.Error("Fail: ", e.Error())
 	}
-	if s3file[2] != s3Host || s3file[3] != s3Bucket {
+	if s3file[2] != config.S3Conf.S3Host || s3file[3] != config.S3Conf.S3Bucket {
 		t.Errorf("%s", string(resultBody))
 	}
 }

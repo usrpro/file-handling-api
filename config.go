@@ -2,7 +2,7 @@ package main
 
 import (
 	"github.com/fulldump/goconfig"
-	"gopkg.in/inconshreveable/log15.v2"
+	log15 "gopkg.in/inconshreveable/log15.v2"
 )
 
 type serverConfig struct {

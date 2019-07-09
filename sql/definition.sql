@@ -6,5 +6,6 @@ create table files_stored (
     name text not null unique,
     remote_addr text not null,
     application text not null,
+    bucket text not null,
     created timestamp not null default now()
 );
