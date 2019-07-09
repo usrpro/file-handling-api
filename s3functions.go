@@ -318,9 +318,10 @@ func deleteFileHandler(wr http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(wr, "[1]Error while processing your request.")
 		return
 	}
-	if ct, e := db.Exec(string(b), r.FormValue("app"), r.FormValue("name")); e != nil || ct.RowsAffected() != 1 {
+	_, e = db.Exec(string(b), r.FormValue("app"), r.FormValue("name"))
+	if e != nil {
 		wr.WriteHeader(http.StatusInternalServerError)
-		log.Println(e.Error(), ct.RowsAffected())
+		log.Println(e.Error())
 		fmt.Fprint(wr, "[2]Error while processing your request.")
 		return
 	}
