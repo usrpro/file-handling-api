@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/tls"
 	"io/ioutil"
 	"log"
 	"os"
@@ -9,20 +10,12 @@ import (
 	"github.com/jackc/pgx"
 )
 
-const (
-	host     = "localhost"
-	port     = 5432
-	database = "s3db_01"
-	user     = "postgres"
-	pass     = ""
-)
-
 var db *pgx.ConnPool
 
 func init() {
 	poolCfg := pgx.ConnPoolConfig{MaxConnections: 9, AcquireTimeout: time.Second * 9}
 	var e error
-	poolCfg.ConnConfig = pgx.ConnConfig{Host: host, Port: port, Database: database, User: user, Password: pass}
+	poolCfg.ConnConfig = pgx.ConnConfig{Host: config.DbConf.Host, Port: uint16(config.DbConf.Port), Database: config.DbConf.DbName, User: config.DbConf.User, Password: config.DbConf.Password, TLSConfig: &tls.Config{InsecureSkipVerify: true}}
 	db, e = pgx.NewConnPool(poolCfg)
 	if e != nil {
 		log.Println(e.Error())
