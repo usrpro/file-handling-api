@@ -274,6 +274,7 @@ func sharedBatchImageHandler(wr http.ResponseWriter, r *http.Request) {
 					imageurl := strings.Join([]string{constructURL(), randNameWithExtension}, "")
 					s3UploadedBatch = append(s3UploadedBatch, imageurl)
 					if e := store(imageurl, r.RemoteAddr, r.FormValue("app"), bucket); e != nil {
+						log.Println(e.Error())
 						wr.WriteHeader(http.StatusInternalServerError)
 						fmt.Fprint(wr, "Internal server error.")
 						return
