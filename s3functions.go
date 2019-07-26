@@ -26,8 +26,8 @@ func constructURL() string {
 }
 
 const (
-	batchMultipartParseMax      = 15000000
-	batchMultipartSingleFileMax = 2500000
+	batchMultipartParseMax      = 30000000
+	batchMultipartSingleFileMax = 7500000
 	singleMultipartParseMax     = 9000000
 	acao                        = "*"
 )
@@ -213,26 +213,33 @@ func sharedImageHandler(wr http.ResponseWriter, r *http.Request) {
 }
 
 // Up to 10 images can be processed, key example: `image0` up to `image9`.
-// Individual images should have less than `2.5 MB`.
-// Total multipart form should be less than `15 MB`.
-// Additional field keys excluding the files mentioned above: `bucket`, `app`
+// Individual images should have less than `7.5 MB`.
+// Total multipart form should be less than `30 MB`.
+// Additional field keys excluding the files mentioned above: `bucket`, `app`, `resize` ? `yes`
 func sharedBatchImageHandler(wr http.ResponseWriter, r *http.Request) {
+	var w, h int
+	var e error
 	r.ParseMultipartForm(batchMultipartParseMax)
-	for _, v := range r.Form {
+	for k, v := range r.Form {
 		if v[0] == "" {
 			wr.WriteHeader(http.StatusBadRequest)
-			fmt.Fprint(wr, "Invalid form fields.")
+			fmt.Fprintf(wr, "Loop check iteration [%s] - Invalid form fields.", k)
+			return
 		}
 	}
-	w, e := strconv.Atoi(r.FormValue("width"))
-	if e != nil {
-		wr.WriteHeader(http.StatusBadRequest)
-		fmt.Fprint(wr, "Invalid resize form values.")
-	}
-	h, e := strconv.Atoi(r.FormValue("height"))
-	if e != nil {
-		wr.WriteHeader(http.StatusBadRequest)
-		fmt.Fprint(wr, "Invalid resize form values.")
+	if strings.TrimSpace(r.FormValue("resize")) == "yes" {
+		w, e = strconv.Atoi(r.FormValue("width"))
+		if e != nil {
+			wr.WriteHeader(http.StatusBadRequest)
+			fmt.Fprint(wr, "Invalid resize form values.")
+			return
+		}
+		h, e = strconv.Atoi(r.FormValue("height"))
+		if e != nil {
+			wr.WriteHeader(http.StatusBadRequest)
+			fmt.Fprint(wr, "Invalid resize form values.")
+			return
+		}
 	}
 	bucket := r.FormValue("bucket")
 	var s3UploadedBatch []string
@@ -259,9 +266,11 @@ func sharedBatchImageHandler(wr http.ResponseWriter, r *http.Request) {
 						log.Println(e.Error())
 						return
 					}
-					if e := resize(localCopyPath, w, h); e != nil {
-						log.Println(e.Error())
-						return
+					if strings.TrimSpace(r.FormValue("resize")) == "yes" {
+						if e := resize(localCopyPath, w, h); e != nil {
+							log.Println(e.Error())
+							return
+						}
 					}
 					p := strings.Split(localCopyPath, "/")
 					randNameWithExtension := p[len(p)-1]
