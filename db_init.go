@@ -15,15 +15,15 @@ var db *pgx.ConnPool
 func init() {
 	poolCfg := pgx.ConnPoolConfig{MaxConnections: 9, AcquireTimeout: time.Second * 9}
 	poolCfg.ConnConfig = pgx.ConnConfig{
-		Host:     config.DbConf.Host,
-		Port:     uint16(config.DbConf.Port),
-		Database: config.DbConf.DbName,
-		User:     config.DbConf.User,
-		Password: config.DbConf.Password,
+		Host:     config.Database.Host,
+		Port:     uint16(config.Database.Port),
+		Database: config.Database.Name,
+		User:     config.Database.User,
+		Password: config.Database.Password,
 	}
-	if config.DbConf.TLS {
+	if config.Database.TLS {
 		poolCfg.ConnConfig.TLSConfig = &tls.Config{
-			ServerName: config.DbConf.Host,
+			ServerName: config.Database.Host,
 		}
 	}
 	var e error

@@ -3,5 +3,5 @@ version: '3.7'
 services:
 
   fileapi:
-    image: hub.usrp.ro/file-handling-api
+    image: hub.usrp.ro/file-handling-api:${TAG:-test}
     build: .

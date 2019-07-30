@@ -11,42 +11,41 @@ type serverConfig struct {
 
 type dbConfig struct {
 	User, Password string
-	Host, DbName   string
+	Host, Name     string
 	Port           int
 	TLS            bool
 }
 
 type s3config struct {
-	S3Protocol string
-	S3Host     string
-	S3key      string
-	S3sk       string
-	S3Bucket   string
+	Protocol string
+	Host     string
+	Key      string
+	Secret   string
+	Bucket   string
+	TLS      bool
 }
 
 type configType struct {
-	Server serverConfig
-	DbConf dbConfig
-	S3Conf s3config
+	Server   serverConfig
+	Database dbConfig
+	S3       s3config
 }
 
 var config = configType{
 	Server: serverConfig{
 		Listen: ":9090",
 	},
-	DbConf: dbConfig{
-		Host:     "/run/postgresql",
-		Port:     5432,
-		DbName:   "s3db_01",
-		User:     "postgres",
-		Password: "",
+	Database: dbConfig{
+		Host: "/run/postgresql",
+		Name: "s3db_01",
+		User: "postgres",
 	},
-	S3Conf: s3config{
-		S3Protocol: "https:",
-		S3Host:     "o.auroraobjects.eu",
-		S3key:      "",
-		S3sk:       "",
-		S3Bucket:   "file-api-test",
+	S3: s3config{
+		Host:   "o.auroraobjects.eu",
+		Key:    "",
+		Secret: "",
+		Bucket: "file-api-test",
+		TLS:    true,
 	},
 }
 

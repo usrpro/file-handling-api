@@ -21,8 +21,14 @@ var s3Client *minio.Client // = s3Init()
 
 // For public buckets
 func constructURL() string {
-	publicURL := strings.Join([]string{config.S3Conf.S3Protocol, "//", config.S3Conf.S3Host, "/", config.S3Conf.S3Bucket, "/"}, "")
-	return publicURL
+	var url strings.Builder
+	if config.S3.TLS {
+		url.WriteString("https://")
+	} else {
+		url.WriteString("http://")
+	}
+	url.WriteString(strings.Join([]string{config.S3.Host, config.S3.Bucket}, "/"))
+	return url.String()
 }
 
 const (
@@ -51,17 +57,16 @@ func setPolicy(Client *minio.Client, bucket string) {
 }
 
 func s3Init() *minio.Client {
-	endpoint := config.S3Conf.S3Host
-	apiKey := config.S3Conf.S3key
-	secretKey := config.S3Conf.S3sk
-	useSSL := true
-	Client, e := minio.New(endpoint, apiKey, secretKey, useSSL)
+	endpoint := config.S3.Host
+	apiKey := config.S3.Key
+	secretKey := config.S3.Secret
+	Client, e := minio.New(endpoint, apiKey, secretKey, config.S3.TLS)
 	if e != nil {
 		log.Println(e.Error())
 	}
-	if config.S3Conf.S3Bucket != "" {
-		makeBucket(Client, config.S3Conf.S3Bucket)
-		setPolicy(Client, config.S3Conf.S3Bucket)
+	if config.S3.Bucket != "" {
+		makeBucket(Client, config.S3.Bucket)
+		setPolicy(Client, config.S3.Bucket)
 	} else {
 		log.Println("No default bucket set, skipping creation")
 	}
@@ -193,7 +198,7 @@ func sharedImageHandler(wr http.ResponseWriter, r *http.Request) {
 				wr.WriteHeader(http.StatusInternalServerError)
 				fmt.Fprint(wr, "Error while processing file.")
 			}
-			imageurl := strings.Join([]string{constructURL(), randNameWithExtension}, "")
+			imageurl := strings.Join([]string{constructURL(), randNameWithExtension}, "/")
 			if e := store(imageurl, r.RemoteAddr, r.FormValue("app"), bucket); e != nil {
 				wr.WriteHeader(http.StatusInternalServerError)
 				fmt.Fprint(wr, "Internal server error.")
@@ -284,7 +289,7 @@ func sharedBatchImageHandler(wr http.ResponseWriter, r *http.Request) {
 						wr.WriteHeader(http.StatusInternalServerError)
 						fmt.Fprint(wr, "Error while processing file.")
 					}
-					imageurl := strings.Join([]string{constructURL(), randNameWithExtension}, "")
+					imageurl := strings.Join([]string{constructURL(), randNameWithExtension}, "/")
 					s3UploadedBatch = append(s3UploadedBatch, imageurl)
 					if e := store(imageurl, r.RemoteAddr, r.FormValue("app"), bucket); e != nil {
 						log.Println(e.Error())
