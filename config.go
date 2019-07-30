@@ -43,10 +43,10 @@ var config = configType{
 	},
 	S3Conf: s3config{
 		S3Protocol: "https:",
-		S3Host:     "",
+		S3Host:     "o.auroraobjects.eu",
 		S3key:      "",
 		S3sk:       "",
-		S3Bucket:   "",
+		S3Bucket:   "file-api-test",
 	},
 }
 

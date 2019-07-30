@@ -109,7 +109,7 @@ func generateMultipartRequest(fileFieldName string, aditionalFormFields map[stri
 func TestSharedImageHandler(t *testing.T) {
 	wr := httptest.NewRecorder()
 	m := make(map[string]string)
-	m["bucket"] = "magick-crop"
+	m["bucket"] = config.S3Conf.S3Bucket
 	m["width"] = "450"
 	m["height"] = "350"
 	bfl, contentType, e := generateMultipartRequest("image", m)
@@ -155,7 +155,7 @@ func TestSharedImageHandlerFail(t *testing.T) {
 func TestSharedBatchImageHandler(t *testing.T) {
 	wr := httptest.NewRecorder()
 	m := make(map[string]string)
-	m["bucket"] = "magick-crop"
+	m["bucket"] = config.S3Conf.S3Bucket
 	m["width"] = "50"
 	m["height"] = "50"
 	bfl, contentType, e := generateMultipartRequest("image0", m)
@@ -184,7 +184,7 @@ func TestDeleteFileHandler(t *testing.T) {
 	r := new(http.Request)
 	body := make(url.Values)
 	body.Set("app", "test")
-	body.Set("bucket", "magick-crop")
+	body.Set("bucket", config.S3Conf.S3Bucket)
 	response, e := http.Get("https://via.placeholder.com/1500")
 	if e != nil {
 		t.Error(e.Error())
@@ -201,8 +201,8 @@ func TestDeleteFileHandler(t *testing.T) {
 	r.PostForm = body
 	name := strings.Split(loc, "/")
 	s3 := s3Init()
-	putFile(s3, loc, "magick-crop", name[len(name)-1], "image/png")
-	store(loc, r.RemoteAddr, "test", "magick-crop")
+	putFile(s3, loc, config.S3Conf.S3Bucket, name[len(name)-1], "image/png")
+	store(loc, r.RemoteAddr, "test", config.S3Conf.S3Bucket)
 	http.HandlerFunc(deleteFileHandler).ServeHTTP(wr, r)
 	if wr.Result().Status != "200 OK" {
 		t.Error("Fail: ", wr.Result().Status)

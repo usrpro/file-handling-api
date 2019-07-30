@@ -59,8 +59,12 @@ func s3Init() *minio.Client {
 	if e != nil {
 		log.Println(e.Error())
 	}
-	makeBucket(Client, config.S3Conf.S3Bucket)
-	setPolicy(Client, config.S3Conf.S3Bucket)
+	if config.S3Conf.S3Bucket != "" {
+		makeBucket(Client, config.S3Conf.S3Bucket)
+		setPolicy(Client, config.S3Conf.S3Bucket)
+	} else {
+		log.Println("No default bucket set, skipping creation")
+	}
 	return Client
 }
 
