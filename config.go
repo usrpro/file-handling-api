@@ -13,7 +13,7 @@ type dbConfig struct {
 	User, Password string
 	Host, DbName   string
 	Port           int
-	SSLMode        string
+	TLS            bool
 }
 
 type s3config struct {
@@ -35,7 +35,7 @@ var config = configType{
 		Listen: ":9090",
 	},
 	DbConf: dbConfig{
-		Host:     "localhost",
+		Host:     "/run/postgresql",
 		Port:     5432,
 		DbName:   "s3db_01",
 		User:     "postgres",

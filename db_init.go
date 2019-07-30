@@ -14,8 +14,19 @@ var db *pgx.ConnPool
 
 func init() {
 	poolCfg := pgx.ConnPoolConfig{MaxConnections: 9, AcquireTimeout: time.Second * 9}
+	poolCfg.ConnConfig = pgx.ConnConfig{
+		Host:     config.DbConf.Host,
+		Port:     uint16(config.DbConf.Port),
+		Database: config.DbConf.DbName,
+		User:     config.DbConf.User,
+		Password: config.DbConf.Password,
+	}
+	if config.DbConf.TLS {
+		poolCfg.ConnConfig.TLSConfig = &tls.Config{
+			ServerName: config.DbConf.Host,
+		}
+	}
 	var e error
-	poolCfg.ConnConfig = pgx.ConnConfig{Host: config.DbConf.Host, Port: uint16(config.DbConf.Port), Database: config.DbConf.DbName, User: config.DbConf.User, Password: config.DbConf.Password, TLSConfig: &tls.Config{InsecureSkipVerify: true}}
 	db, e = pgx.NewConnPool(poolCfg)
 	if e != nil {
 		log.Println(e.Error())
