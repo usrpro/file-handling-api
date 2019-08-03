@@ -1,5 +1,5 @@
 -- DB -- 
-create database s3db_01;
+--create database s3db_01;
 -- TABLE DEFINITIONS --
 create table files_stored (
     id serial primary key,

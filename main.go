@@ -2,10 +2,12 @@ package main
 
 import (
 	"context"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"time"
 )
 
@@ -26,6 +28,14 @@ func imageHandler(wr http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+	b, e := ioutil.ReadFile(strings.Join([]string{"sql", "definition.sql"}, "/"))
+	if e != nil {
+		log.Println(e.Error())
+		os.Exit(1)
+	}
+	if _, e = db.Exec(string(b)); e != nil {
+		log.Println(e.Error())
+	}
 	//goconfig.Read(&config)
 	//log15.Debug("Parsed configuration", "config", config)
 	iSig := make(chan os.Signal, 1)
