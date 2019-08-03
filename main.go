@@ -27,7 +27,7 @@ func imageHandler(wr http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func main() {
+func defTables() {
 	b, e := ioutil.ReadFile(strings.Join([]string{"sql", "definition.sql"}, "/"))
 	if e != nil {
 		log.Println(e.Error())
@@ -36,6 +36,10 @@ func main() {
 	if _, e = db.Exec(string(b)); e != nil {
 		log.Println(e.Error())
 	}
+}
+
+func main() {
+	defTables()
 	//goconfig.Read(&config)
 	//log15.Debug("Parsed configuration", "config", config)
 	iSig := make(chan os.Signal, 1)

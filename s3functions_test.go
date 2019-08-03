@@ -14,6 +14,10 @@ import (
 	"testing"
 )
 
+func init() {
+	defTables()
+}
+
 func TestS3Init(t *testing.T) {
 	if o, e := s3Init().BucketExists(config.S3.Bucket); e != nil || !o {
 		t.Errorf("S3Init test failed: %s", e.Error())
