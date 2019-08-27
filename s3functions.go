@@ -20,14 +20,14 @@ import (
 var s3Client *minio.Client // = s3Init()
 
 // For public buckets
-func constructURL() string {
+func constructURL(bucket string) string {
 	var url strings.Builder
 	if config.S3.TLS {
 		url.WriteString("https://")
 	} else {
 		url.WriteString("http://")
 	}
-	url.WriteString(strings.Join([]string{config.S3.Host, config.S3.Bucket}, "/"))
+	url.WriteString(strings.Join([]string{bucket, ".", config.S3.Host}, ""))
 	return url.String()
 }
 
@@ -198,7 +198,7 @@ func sharedImageHandler(wr http.ResponseWriter, r *http.Request) {
 				wr.WriteHeader(http.StatusInternalServerError)
 				fmt.Fprint(wr, "Error while processing file.")
 			}
-			imageurl := strings.Join([]string{constructURL(), randNameWithExtension}, "/")
+			imageurl := strings.Join([]string{constructURL(bucket), randNameWithExtension}, "/")
 			if e := store(imageurl, r.RemoteAddr, r.FormValue("app"), bucket); e != nil {
 				wr.WriteHeader(http.StatusInternalServerError)
 				fmt.Fprint(wr, "Internal server error.")
@@ -289,7 +289,7 @@ func sharedBatchImageHandler(wr http.ResponseWriter, r *http.Request) {
 						wr.WriteHeader(http.StatusInternalServerError)
 						fmt.Fprint(wr, "Error while processing file.")
 					}
-					imageurl := strings.Join([]string{constructURL(), randNameWithExtension}, "/")
+					imageurl := strings.Join([]string{constructURL(bucket), randNameWithExtension}, "/")
 					s3UploadedBatch = append(s3UploadedBatch, imageurl)
 					if e := store(imageurl, r.RemoteAddr, r.FormValue("app"), bucket); e != nil {
 						log.Println(e.Error())
