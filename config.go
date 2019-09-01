@@ -37,6 +37,7 @@ var config = configType{
 	},
 	Database: dbConfig{
 		Host: "/run/postgresql",
+		Port: 5432,
 		Name: "s3db_01",
 		User: "postgres",
 	},

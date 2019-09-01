@@ -2,13 +2,6 @@
 	"Server": {
 		"Listen": ":80"
 	},
-	"Database": {
-		"Host":     "pg0.usrp.ro",
-		"Port":     5432,
-		"Name":     "file_api",
-		"User":     "file_api",
-		"TLS":		true
-	},
 	"S3": {
 		"Host":     "o.auroraobjects.eu",
 		"Bucket":   "",
