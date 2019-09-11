@@ -54,7 +54,7 @@ func TestPutFile(t *testing.T) {
 			t.Errorf("S3 PUT test failed: %s", v.Error())
 		}
 	}
-	url := strings.Join([]string{constructURL(testBucket), fileName}, "/")
+	url := strings.Join([]string{"https://", testS3Host, testBucket, fileName}, "/")
 	response2, e := http.Get(url)
 	err = append(err, e)
 	b2, e := ioutil.ReadAll(response2.Body)
