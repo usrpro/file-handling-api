@@ -44,23 +44,30 @@ func TestPutFile(t *testing.T) {
 	response, e := http.Get("https://via.placeholder.com/1500")
 	err = append(err, e)
 	b, e := ioutil.ReadAll(response.Body)
-	err = append(err, e)
+	if e != nil {
+		t.Error("Fail[1]:", e.Error())
+	}
 	fileName := string(makeRandomString(15))
 	folder, e := os.UserHomeDir()
-	err = append(err, e)
+	if e != nil {
+		t.Error("Fail[2]:", e.Error())
+	}
 	saveFilePath := strings.Join([]string{folder, "/", fileName, ".png"}, "")
-	err = append(err, ioutil.WriteFile(saveFilePath, b, os.ModePerm))
-	err = append(err, putFile(s3, saveFilePath, config.S3.Bucket, fileName, "image/png"))
-	for _, v := range err {
-		if v != nil {
-			t.Errorf("S3 PUT test failed: %s", v.Error())
-		}
+	if e = ioutil.WriteFile(saveFilePath, b, os.ModePerm); e != nil {
+		t.Error("Fail[3]:", e.Error())
+	}
+	if e = putFile(s3, saveFilePath, config.S3.Bucket, fileName, "image/png"); e != nil {
+		t.Error("Fail[4]:", e.Error())
 	}
 	url := strings.Join([]string{"https:/", config.S3.Host, config.S3.Bucket, fileName}, "/")
 	response2, e := http.Get(url)
-	err = append(err, e)
+	if e != nil {
+		t.Error("Fail[5]:", e.Error())
+	}
 	b2, e := ioutil.ReadAll(response2.Body)
-	err = append(err, e)
+	if e != nil {
+		t.Error("Fail[6]:", e.Error())
+	}
 	imgType := http.DetectContentType(b2)
 	if imgType != "image/png" {
 		t.Errorf("S3 PUT test failed at image type check: %s", imgType)
