@@ -16,13 +16,15 @@ import (
 
 func init() {
 	defTables()
+	config.S3.Host = "play.minio.io:9000"
+	config.S3.Bucket = "magick-crop"
+	config.S3.Key = "Q3AM3UQ867SPQQA43P2F"
+	config.S3.Secret = "zuf+tfteSlswRu7BJ86wekitnifILbZam1KYY3TG"
+	s3Client = s3Init()
 }
 
-var testBucket = os.Getenv("S3_BUCKET")
-var testS3Host = os.Getenv("S3_HOST")
-
 func TestS3Init(t *testing.T) {
-	if o, e := s3Init().BucketExists(testBucket); e != nil || !o {
+	if o, e := s3Init().BucketExists(config.S3.Bucket); e != nil || !o {
 		t.Errorf("S3Init test failed: %s", e.Error())
 	}
 }
@@ -48,13 +50,13 @@ func TestPutFile(t *testing.T) {
 	err = append(err, e)
 	saveFilePath := strings.Join([]string{folder, "/", fileName, ".png"}, "")
 	err = append(err, ioutil.WriteFile(saveFilePath, b, os.ModePerm))
-	err = append(err, putFile(s3, saveFilePath, testBucket, fileName, "image/png"))
+	err = append(err, putFile(s3, saveFilePath, config.S3.Bucket, fileName, "image/png"))
 	for _, v := range err {
 		if v != nil {
 			t.Errorf("S3 PUT test failed: %s", v.Error())
 		}
 	}
-	url := strings.Join([]string{"https://", testS3Host, testBucket, fileName}, "/")
+	url := strings.Join([]string{"https:/", config.S3.Host, config.S3.Bucket, fileName}, "/")
 	response2, e := http.Get(url)
 	err = append(err, e)
 	b2, e := ioutil.ReadAll(response2.Body)
@@ -116,7 +118,7 @@ func generateMultipartRequest(fileFieldName string, aditionalFormFields map[stri
 func TestSharedImageHandler(t *testing.T) {
 	wr := httptest.NewRecorder()
 	m := make(map[string]string)
-	m["bucket"] = testBucket
+	m["bucket"] = config.S3.Bucket
 	m["width"] = "450"
 	m["height"] = "350"
 	bfl, contentType, e := generateMultipartRequest("image", m)
@@ -138,7 +140,7 @@ func TestSharedImageHandler(t *testing.T) {
 	if rows, e := db.Query("select bucket from files_stored where name = $1;", string(resultBody)); e != nil || !rows.Next() {
 		t.Error("Fail: ", e.Error())
 	}
-	if s3file[2] != testS3Host || s3file[3] != testBucket {
+	if s3file[2] != config.S3.Bucket+"."+config.S3.Host {
 		t.Errorf("%s", string(resultBody))
 	}
 }
@@ -162,7 +164,7 @@ func TestSharedImageHandlerFail(t *testing.T) {
 func TestSharedBatchImageHandler(t *testing.T) {
 	wr := httptest.NewRecorder()
 	m := make(map[string]string)
-	m["bucket"] = testBucket
+	m["bucket"] = config.S3.Bucket
 	m["width"] = "50"
 	m["height"] = "50"
 	bfl, contentType, e := generateMultipartRequest("image0", m)
@@ -191,7 +193,7 @@ func TestDeleteFileHandler(t *testing.T) {
 	r := new(http.Request)
 	body := make(url.Values)
 	body.Set("app", "test")
-	body.Set("bucket", testBucket)
+	body.Set("bucket", config.S3.Bucket)
 	response, e := http.Get("https://via.placeholder.com/1500")
 	if e != nil {
 		t.Error(e.Error())
@@ -208,8 +210,8 @@ func TestDeleteFileHandler(t *testing.T) {
 	r.PostForm = body
 	name := strings.Split(loc, "/")
 	s3 := s3Init()
-	putFile(s3, loc, testBucket, name[len(name)-1], "image/png")
-	store(loc, r.RemoteAddr, "test", testBucket)
+	putFile(s3, loc, config.S3.Bucket, name[len(name)-1], "image/png")
+	store(loc, r.RemoteAddr, "test", config.S3.Bucket)
 	http.HandlerFunc(deleteFileHandler).ServeHTTP(wr, r)
 	if wr.Result().Status != "200 OK" {
 		t.Error("Fail: ", wr.Result().Status)
