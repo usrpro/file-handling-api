@@ -12,7 +12,7 @@ import (
 )
 
 func init() {
-	s3Client = s3Init()
+
 }
 
 func imageHandler(wr http.ResponseWriter, r *http.Request) {
@@ -44,6 +44,7 @@ func main() {
 	//log15.Debug("Parsed configuration", "config", config)
 	iSig := make(chan os.Signal, 1)
 	signal.Notify(iSig, os.Interrupt)
+	s3Client = s3Init()
 	s := http.Server{Addr: config.Server.Listen, Handler: http.HandlerFunc(imageHandler)}
 	go func() {
 		s.ListenAndServe()

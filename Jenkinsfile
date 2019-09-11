@@ -1,5 +1,5 @@
 node {
-    git url: 'https://github.com/usrpro/file-handling-api.git'
+    checkout scm
     sh 'printenv | more'
     docker.image('postgres:latest').withRun('-e "POSTGRES_DB=s3db_01"') { c ->
         docker.image('postgres:latest').inside("--link ${c.id}:db") {
